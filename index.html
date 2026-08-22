@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>T1 Schedule</title>
+<meta name="description" content="T1 League of Legends schedule and results, in Taipei time.">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="T1">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" href="./favicon.png" type="image/png">
+<style>
+  :root {
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface-1:#1a1a19; --surface-2:#232322;
+    --text-1:#ffffff; --text-2:#c3c2b7; --muted:#898781;
+    --hair:rgba(255,255,255,0.10); --grid:#2c2c2a;
+    --good:#0ca30c; --critical:#d03b3b; --warning:#fab219; --gold:#fab219;
+    --accent:#ff2d4b; --series-1:#3987e5; --radius:14px;
+    --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  html:has(#lightMode:checked) {
+    color-scheme: light;
+    --plane:#f9f9f7; --surface-1:#fcfcfb; --surface-2:#f2f1ed;
+    --text-1:#0b0b0b; --text-2:#52514e; --muted:#898781;
+    --hair:rgba(11,11,11,0.10); --grid:#e1e0d9;
+    --gold:#8a5a00; --accent:#d1002a; --series-1:#2a78d6;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  #lightMode { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  html { background:var(--plane); }
+  body { margin:0; background:var(--plane); color:var(--text-1);
+    font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.45; overscroll-behavior-y:none; }
+
+  .appbar { position:sticky; top:0; z-index:20; background:var(--plane);
+    border-bottom:1px solid var(--hair); padding:calc(var(--safe-t) + 10px) 16px 10px;
+    display:flex; align-items:center; gap:10px; }
+  .crest { width:32px; height:32px; border-radius:9px; background:var(--accent); color:#fff;
+    display:grid; place-items:center; font-weight:800; font-size:14px; flex:0 0 auto; }
+  .appbar h1 { margin:0; font-size:17px; font-weight:700; letter-spacing:-.01em; }
+  .appbar .tzline { font-size:11px; color:var(--muted); margin-top:-1px; }
+  .grow { flex:1 1 auto; }
+  .iconbtn { width:38px; height:38px; border-radius:50%; border:1px solid var(--hair);
+    background:var(--surface-1); color:var(--text-1); font-size:16px; display:grid;
+    place-items:center; cursor:pointer; flex:0 0 auto; font-family:inherit; }
+  .iconbtn:active { transform:scale(.94); }
+  .iconbtn[disabled] { opacity:.5; }
+
+  .statusbar { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2);
+    padding:8px 16px; border-bottom:1px solid var(--hair); background:var(--surface-1); }
+  .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:var(--warning); }
+  .dot.live { background:var(--good); box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent); }
+  .dot.cache { background:var(--warning); }
+  .dot.load { background:var(--series-1); animation:pulse 1s infinite alternate; }
+  @keyframes pulse { to { opacity:.25; } }
+
+  main { padding:16px 16px calc(var(--safe-b) + 88px); max-width:640px; margin:0 auto; }
+  .panel { display:block; }
+  body.js .panel { display:none; }
+  body.js .panel.on { display:block; }
+
+  .hero { background:var(--surface-1); border:1px solid var(--hair); border-radius:var(--radius);
+    padding:18px 16px; position:relative; overflow:hidden; }
+  .hero::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--accent); }
+  .eyebrow { font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+    font-weight:600; margin:0 0 8px; }
+  .hero .vs { font-size:23px; font-weight:700; letter-spacing:-.02em; margin:0 0 4px; }
+  .hero .vs .sep { color:var(--muted); font-weight:500; font-size:16px; }
+  .hero .when { font-size:13.5px; color:var(--text-2); margin:0; }
+  .hero .event { font-size:12.5px; color:var(--muted); margin:2px 0 0; }
+  .countdown { display:flex; gap:7px; }
+  .countdown:not(:empty) { margin-top:14px; }
+  .cd-cell { background:var(--surface-2); border:1px solid var(--hair); border-radius:10px;
+    padding:7px 0; flex:1 1 0; text-align:center; min-width:0; }
+  .cd-cell b { display:block; font-size:19px; font-variant-numeric:tabular-nums; line-height:1.15; }
+  .cd-cell span { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+    margin:26px 0 9px; font-weight:600; }
+  h2 .count { text-transform:none; letter-spacing:0; color:var(--text-2); font-weight:500; }
+  .card { background:var(--surface-1); border:1px solid var(--hair); border-radius:var(--radius); overflow:hidden; }
+  .row { display:flex; align-items:center; gap:11px; padding:12px 14px; border-bottom:1px solid var(--hair); }
+  .row:last-child { border-bottom:0; }
+  .date { flex:0 0 66px; font-size:11.5px; color:var(--text-2); font-variant-numeric:tabular-nums; line-height:1.3; }
+  .date b { display:block; font-size:13.5px; color:var(--text-1); font-weight:600; }
+  .mid { flex:1 1 auto; min-width:0; }
+  .opp { font-size:14.5px; font-weight:600; letter-spacing:-.01em; }
+  .meta { font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .right { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
+  .score { font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .pill { font-size:11px; font-weight:700; letter-spacing:.03em; padding:3px 8px;
+    border-radius:999px; border:1px solid transparent; white-space:nowrap; }
+  .pill.w { color:var(--good); border-color:color-mix(in srgb,var(--good) 45%,transparent); background:color-mix(in srgb,var(--good) 13%,transparent); }
+  .pill.l { color:var(--critical); border-color:color-mix(in srgb,var(--critical) 45%,transparent); background:color-mix(in srgb,var(--critical) 13%,transparent); }
+  .pill.n { color:var(--muted); border-color:var(--hair); }
+  .pill.soon { color:var(--series-1); border-color:color-mix(in srgb,var(--series-1) 45%,transparent); background:color-mix(in srgb,var(--series-1) 13%,transparent); }
+
+  .tiles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .tile { background:var(--surface-1); border:1px solid var(--hair); border-radius:var(--radius); padding:13px; }
+  .tile .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .tile .value { font-size:25px; font-weight:700; letter-spacing:-.02em; margin-top:3px; }
+  .tile .sub { font-size:11.5px; color:var(--text-2); margin-top:2px; }
+  .meter { height:6px; border-radius:3px; background:var(--grid); margin-top:9px; overflow:hidden; }
+  .meter i { display:block; height:100%; border-radius:3px; background:var(--series-1); }
+  .form-strip { display:flex; gap:4px; margin-top:9px; flex-wrap:wrap; }
+  .form-strip s { text-decoration:none; width:21px; height:21px; border-radius:6px; display:grid;
+    place-items:center; font-size:10.5px; font-weight:700; border:1px solid var(--hair); }
+  .form-strip s.w { background:color-mix(in srgb,var(--good) 20%,transparent); color:var(--good); border-color:color-mix(in srgb,var(--good) 45%,transparent); }
+  .form-strip s.l { background:color-mix(in srgb,var(--critical) 20%,transparent); color:var(--critical); border-color:color-mix(in srgb,var(--critical) 45%,transparent); }
+
+  .roster { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .player { background:var(--surface-1); border:1px solid var(--hair); border-radius:var(--radius);
+    padding:12px; text-align:center; }
+  .player .role { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); font-weight:600; }
+  .player .id { font-size:15.5px; font-weight:700; margin-top:4px; }
+  .player .name { font-size:11px; color:var(--text-2); margin-top:1px; }
+  .subs { font-size:12px; color:var(--text-2); margin-top:10px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13.5px; table-layout:fixed; }
+  th, td { text-align:left; padding:10px 10px; border-bottom:1px solid var(--hair); }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+  tr:last-child td { border-bottom:0; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .place-1 { color:var(--gold); font-weight:700; }
+  .evcol { width:46%; overflow-wrap:anywhere; }
+  .plcol { width:19%; }
+  td.num, th.num { width:35%; white-space:nowrap; }
+
+  .tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .tab { font-size:12px; padding:6px 12px; border-radius:999px; cursor:pointer; font-family:inherit;
+    border:1px solid var(--hair); background:transparent; color:var(--text-2); }
+  .tab[aria-selected="true"] { background:var(--surface-2); color:var(--text-1); border-color:var(--text-2); }
+
+  .navbar { position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex;
+    background:color-mix(in srgb,var(--plane) 92%,transparent); backdrop-filter:blur(12px);
+    border-top:1px solid var(--hair); padding-bottom:var(--safe-b); }
+  body:not(.js) .navbar { display:none; }
+  .navbar button { flex:1 1 0; background:none; border:0; color:var(--muted); font-family:inherit;
+    font-size:11px; padding:9px 0 10px; cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; gap:3px; }
+  .navbar button b { font-size:17px; line-height:1; font-weight:400; }
+  .navbar button[aria-selected="true"] { color:var(--accent); }
+
+  .settings { margin-top:26px; padding-top:14px; border-top:1px solid var(--hair);
+    display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text-2); }
+  .swbtn { border:1px solid var(--hair); background:var(--surface-1); color:var(--text-1);
+    font:inherit; font-size:13px; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  footer { font-size:11.5px; color:var(--muted); margin-top:18px; line-height:1.7; }
+  footer a { color:var(--text-2); }
+</style>
+</head>
+<body>
+<input type="checkbox" id="lightMode" aria-label="Switch to light theme">
+
+<div class="appbar">
+  <div class="crest">T1</div>
+  <div>
+    <h1>T1 Schedule</h1>
+    <div class="tzline">Taipei time · UTC+8</div>
+  </div>
+  <div class="grow"></div>
+  <button class="iconbtn" id="refreshBtn" aria-label="Refresh" title="Refresh">↻</button>
+</div>
+
+<div class="statusbar">
+  <span class="dot cache" id="dot"></span>
+  <span id="statusText">Built-in snapshot · 2026-08-20</span>
+  <span class="grow"></span>
+  <span id="updatedText"></span>
+</div>
+
+<main>
+
+  <section class="panel on" id="p-schedule">
+    <div class="hero">
+      <p class="eyebrow">Next match</p>
+      <div class="vs" id="heroVs">T1 <span class="sep">vs</span> KT Rolster</div>
+      <p class="when" id="heroWhen">Friday 21 August at 18:00 · Bo5</p>
+      <p class="event" id="heroEvent">LCK 2026</p>
+      <div class="countdown" id="countdown"></div>
+    </div>
+
+    <h2>Upcoming <span class="count" id="upCount">(2)</span></h2>
+    <div class="card" id="upcoming"><div class="row">
+      <div class="date"><b>21 Aug</b>Fri · 18:00</div>
+      <div class="mid"><div class="opp">KT Rolster</div><div class="meta">LCK 2026</div></div>
+      <div class="right"><span class="pill n">Bo5</span></div></div><div class="row">
+      <div class="date"><b>23 Aug</b>Sun · 16:00</div>
+      <div class="mid"><div class="opp">Hanwha Life Esports</div><div class="meta">LCK 2026</div></div>
+      <div class="right"><span class="pill n">Bo5</span></div></div></div>
+  </section>
+
+  <section class="panel" id="p-results">
+    <div class="tiles">
+      <div class="tile"><div class="label">2026 record</div><div class="value" id="tRecord">4–4</div><div class="sub" id="tRecordSub">8 decided series</div></div>
+      <div class="tile"><div class="label">Win rate</div><div class="value" id="tWinrate">50%</div><div class="meter"><i id="tWinbar" style="width:50%"></i></div></div>
+      <div class="tile"><div class="label">Streak</div><div class="value" id="tStreak">1W</div><div class="sub" id="tStreakSub">consecutive wins</div></div>
+      <div class="tile"><div class="label">Recent form</div><div class="form-strip" id="formStrip"><s class="l" title="Gen.G — L">L</s><s class="w" title="Gen.G — W">W</s><s class="w" title="Gen.G — W">W</s><s class="l" title="Dplus KIA — L">L</s><s class="w" title="Hanwha Life Esports — W">W</s><s class="l" title="Dplus KIA — L">L</s><s class="l" title="Gen.G — L">L</s><s class="w" title="DN Freecs Soopers — W">W</s></div></div>
+    </div>
+
+    <h2>Recent results <span class="count" id="recCount">(11)</span></h2>
+    <span id="tabSlot"></span>
+    <div class="card" id="recent"><div class="row">
+      <div class="date"><b>17 Aug</b>Mon · 17:00</div>
+      <div class="mid"><div class="opp">DN Freecs Soopers</div><div class="meta">KeSPA Cup 2026 · Bo3</div></div>
+      <div class="right"><span class="pill w">W</span></div></div><div class="row">
+      <div class="date"><b>16 Aug</b>Sun · 16:00</div>
+      <div class="mid"><div class="opp">Gen.G</div><div class="meta">LCK 2026 · Bo3</div></div>
+      <div class="right"><span class="score">0-2</span><span class="pill l">L</span></div></div><div class="row">
+      <div class="date"><b>14 Aug</b>Fri · 16:00</div>
+      <div class="mid"><div class="opp">Dplus KIA</div><div class="meta">LCK 2026 · Bo3</div></div>
+      <div class="right"><span class="pill l">L</span></div></div><div class="row">
+      <div class="date"><b>08 Aug</b>Sat · 16:00</div>
+      <div class="mid"><div class="opp">Hanwha Life Esports</div><div class="meta">LCK 2026 · Bo3</div></div>
+      <div class="right"><span class="pill w">W</span></div></div><div class="row">
+      <div class="date"><b>06 Aug</b>Thu · 18:00</div>
+      <div class="mid"><div class="opp">Dplus KIA</div><div class="meta">LCK 2026 · Bo3</div></div>
+      <div class="right"><span class="pill l">L</span></div></div><div class="row">
+      <div class="date"><b>04 Aug</b>Tue · 14:00</div>
+      <div class="mid"><div class="opp">Hanwha Life Esports</div><div class="meta">KeSPA Cup 2026 · Bo3</div></div>
+      <div class="right"><span class="pill n">No data</span></div></div><div class="row">
+      <div class="date"><b>03 Aug</b>Mon · 18:00</div>
+      <div class="mid"><div class="opp">Nongshim RedForce</div><div class="meta">KeSPA Cup 2026 · Bo3</div></div>
+      <div class="right"><span class="pill n">No data</span></div></div><div class="row">
+      <div class="date"><b>31 Jul</b>Fri · 16:00</div>
+      <div class="mid"><div class="opp">Gen.G</div><div class="meta">LCK 2026 · Bo3</div></div>
+      <div class="right"><span class="score">2-0</span><span class="pill w">W</span></div></div><div class="row">
+      <div class="date"><b>29 Jul</b>Wed · 18:00</div>
+      <div class="mid"><div class="opp">KT Rolster</div><div class="meta">LCK 2026 · Bo3</div></div>
+      <div class="right"><span class="pill n">No data</span></div></div><div class="row">
+      <div class="date"><b>21 Jul</b>Tue · 17:00</div>
+      <div class="mid"><div class="opp">Gen.G</div><div class="meta">KeSPA Cup 2026 Group Stage · Bo1</div></div>
+      <div class="right"><span class="score">1-0</span><span class="pill w">W</span></div></div><div class="row">
+      <div class="date"><b>19 Jul</b>Sun · 17:00</div>
+      <div class="mid"><div class="opp">Gen.G</div><div class="meta">Esports World Cup 2026 Playoffs · Bo3</div></div>
+      <div class="right"><span class="score">1-2</span><span class="pill l">L</span></div></div></div>
+  </section>
+
+  <section class="panel" id="p-team">
+    <h2 style="margin-top:0">Roster</h2>
+    <div class="roster" id="roster"><div class="player"><div class="role">Top</div><div class="id">Doran</div><div class="name">Choi Hyeon-joon</div></div><div class="player"><div class="role">Jungle</div><div class="id">Oner</div><div class="name">Mun Hyeon-jun</div></div><div class="player"><div class="role">Mid</div><div class="id">Faker</div><div class="name">Lee Sang-hyeok</div></div><div class="player"><div class="role">Bot</div><div class="id">Peyz</div><div class="name">Kim Su-hwan</div></div><div class="player"><div class="role">Support</div><div class="id">Keria</div><div class="name">Ryu Min-seok</div></div></div>
+    <div class="subs" id="subs">Substitutes / academy: Haetae (Top) · Painter (Jungle) · Guti (Mid) · Cypher (Bot) · Cloud (Support)</div>
+
+    <h2>Tournament record</h2>
+    <div class="card"><table>
+      <thead><tr><th class="evcol">Event</th><th class="plcol">Place</th><th class="num">Prize</th></tr></thead>
+      <tbody id="trophies"><tr><td class="evcol">LCK 2026 (in progress)</td><td class="plcol ">2nd</td><td class="num">—</td></tr><tr><td class="evcol">LCK Cup 2026</td><td class="plcol ">4th</td><td class="num">—</td></tr><tr><td class="evcol">KeSPA Cup 2025</td><td class="plcol place-1">1st</td><td class="num">$34,102</td></tr><tr><td class="evcol">Worlds 2025</td><td class="plcol place-1">1st</td><td class="num">$1,000,000</td></tr><tr><td class="evcol">Esports World Cup 2025</td><td class="plcol ">3rd</td><td class="num">$230,000</td></tr><tr><td class="evcol">MSI 2025</td><td class="plcol ">2nd</td><td class="num">$300,000</td></tr></tbody>
+    </table></div>
+
+    <div class="settings">
+      <label class="swbtn" for="lightMode">◐ Switch theme</label>
+      <span id="installHint"></span>
+    </div>
+
+    <footer>
+      <div>Live data comes from the Leaguepedia Cargo API, fetched by your phone each time you open the app. When it can't be reached, the built-in snapshot from 2026-08-20 is shown instead and the dot turns amber.</div>
+      <div style="margin-top:6px">Sources: <a href="https://lol.fandom.com/wiki/T1" target="_blank" rel="noopener">Leaguepedia</a> · <a href="https://game-tournaments.com/en/lol/team/t1" target="_blank" rel="noopener">game-tournaments</a> · <a href="https://lolesports.com/teams/t1" target="_blank" rel="noopener">LoL Esports</a></div>
+    </footer>
+  </section>
+
+</main>
+
+<nav class="navbar" id="navbar" role="tablist">
+  <button data-p="schedule" aria-selected="true"><b>◇</b>Schedule</button>
+  <button data-p="results"  aria-selected="false"><b>▤</b>Results</button>
+  <button data-p="team"     aria-selected="false"><b>◎</b>Team</button>
+</nav>
+
+<script>
+(function () {
+  "use strict";
+  document.body.classList.add("js");
+
+  var SNAPSHOT = {"builtAt":"2026-08-20","matches":[{"dt":"2026-08-23T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":5,"s":null,"o":null},{"dt":"2026-08-21T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":5,"s":null,"o":null},{"dt":"2026-08-17T09:00:00Z","opp":"DN Freecs Soopers","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-16T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"0-2","o":"L"},{"dt":"2026-08-14T08:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-08T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-06T10:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-04T06:00:00Z","opp":"Hanwha Life Esports","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-08-03T10:00:00Z","opp":"Nongshim RedForce","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-07-31T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"2-0","o":"W"},{"dt":"2026-07-29T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-07-21T09:00:00Z","opp":"Gen.G","event":"KeSPA Cup 2026 Group Stage","bo":1,"s":"1-0","o":"W"},{"dt":"2026-07-19T09:00:00Z","opp":"Gen.G","event":"Esports World Cup 2026 Playoffs","bo":3,"s":"1-2","o":"L"}],"roster":[{"role":"Top","id":"Doran","name":"Choi Hyeon-joon"},{"role":"Jungle","id":"Oner","name":"Mun Hyeon-jun"},{"role":"Mid","id":"Faker","name":"Lee Sang-hyeok"},{"role":"Bot","id":"Peyz","name":"Kim Su-hwan"},{"role":"Support","id":"Keria","name":"Ryu Min-seok"}],"subs":["Haetae (Top)","Painter (Jungle)","Guti (Mid)","Cypher (Bot)","Cloud (Support)"],"trophies":[{"event":"LCK 2026 (in progress)","place":"2","prize":null},{"event":"LCK Cup 2026","place":"4","prize":null},{"event":"KeSPA Cup 2025","place":"1","prize":34102},{"event":"Worlds 2025","place":"1","prize":1000000},{"event":"Esports World Cup 2025","place":"3","prize":230000},{"event":"MSI 2025","place":"2","prize":300000}]};
+  var TEAM = "T1", API = "https://lol.fandom.com/api.php", SEASON_START = "2026-01-01";
+  var TIMEOUT_MS = 7000, OVERALL_MS = 16000;
+
+  var TZ = "Asia/Taipei";
+  var fDay  = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, day: "2-digit", month: "short" });
+  var fWk   = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short" });
+  var fTime = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
+  var fFull = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", hour12: false });
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+
+  $("tabSlot").innerHTML = '<div class="tabs" id="recTabs">' +
+    '<button class="tab" data-f="all" aria-selected="true">All</button>' +
+    '<button class="tab" data-f="LCK" aria-selected="false">LCK</button>' +
+    '<button class="tab" data-f="KeSPA" aria-selected="false">KeSPA Cup</button>' +
+    '<button class="tab" data-f="intl" aria-selected="false">International</button></div>';
+
+  var STATE = { matches: SNAPSHOT.matches.slice(), roster: SNAPSHOT.roster,
+                subs: SNAPSHOT.subs, trophies: SNAPSHOT.trophies, filter: "all" };
+
+  function timedFetch(url, ms) {
+    if (typeof AbortController === "undefined") return fetch(url, { cache: "no-store" });
+    var c = new AbortController();
+    var t = setTimeout(function () { c.abort(); }, ms);
+    return fetch(url, { cache: "no-store", signal: c.signal }).then(
+      function (r) { clearTimeout(t); return r; },
+      function (e) { clearTimeout(t); throw e; });
+  }
+  function cargoURL(params) {
+    var base = { action: "cargoquery", format: "json", origin: "*" };
+    for (var k in params) base[k] = params[k];
+    return API + "?" + new URLSearchParams(base).toString();
+  }
+  function getJSON(url) {
+    return timedFetch(url, TIMEOUT_MS)
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .catch(function () {
+        return timedFetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url), TIMEOUT_MS)
+          .then(function (r) { if (!r.ok) throw new Error("relay"); return r.json(); });
+      });
+  }
+  function rowsOf(j) { return (j && j.cargoquery) ? j.cargoquery.map(function (x) { return x.title; }) : []; }
+  function prettyEvent(p) {
+    if (!p) return "";
+    return p.replace(/_/g, " ").replace(/\/(\d{4}) Season/, " $1").split("/").filter(Boolean).join(" · ");
+  }
+  function fetchMatches() {
+    return getJSON(cargoURL({
+      tables: "MatchSchedule=MS",
+      fields: "MS.DateTime_UTC=dt,MS.Team1=t1,MS.Team2=t2,MS.Team1Score=s1,MS.Team2Score=s2,MS.BestOf=bo,MS.OverviewPage=page",
+      where: "(MS.Team1='" + TEAM + "' OR MS.Team2='" + TEAM + "') AND MS.DateTime_UTC > '" + SEASON_START + "'",
+      order_by: "MS.DateTime_UTC DESC", limit: "300"
+    })).then(function (j) {
+      return rowsOf(j).map(function (m) {
+        var home = m.t1 === TEAM;
+        var a = (m.s1 === "" || m.s1 == null) ? null : parseInt(m.s1, 10);
+        var b = (m.s2 === "" || m.s2 == null) ? null : parseInt(m.s2, 10);
+        var mine = home ? a : b, theirs = home ? b : a;
+        var done = mine != null && theirs != null && (mine + theirs) > 0;
+        return { dt: (m.dt || "").replace(" ", "T") + "Z", opp: (home ? m.t2 : m.t1) || "TBD",
+                 event: prettyEvent(m.page || ""), bo: m.bo ? parseInt(m.bo, 10) : null,
+                 s: done ? mine + "-" + theirs : null, o: done ? (mine > theirs ? "W" : "L") : null };
+      }).filter(function (m) { return m.dt.length > 10; });
+    });
+  }
+  function fetchRoster() {
+    return getJSON(cargoURL({ tables: "Players=P", fields: "P.ID=id,P.Role=role,P.Name=name",
+      where: "P.Team='" + TEAM + "'", limit: "30" })).then(function (j) {
+      var O = { top:0, jungle:1, mid:2, bot:3, support:4 };
+      return rowsOf(j).map(function (p) { return { id: p.id, name: p.name || "", role: (p.role || "").trim() }; })
+        .filter(function (p) { return p.id && O[p.role.toLowerCase()] !== undefined; })
+        .sort(function (x, y) { return O[x.role.toLowerCase()] - O[y.role.toLowerCase()]; })
+        .map(function (p) { p.role = p.role.charAt(0).toUpperCase() + p.role.slice(1); return p; });
+    });
+  }
+  function fetchTrophies() {
+    return getJSON(cargoURL({ tables: "TournamentResults=TR",
+      fields: "TR.Event=event,TR.Place=place,TR.Prize_USD=prize,TR.Date_Sort=date",
+      where: "TR.Team='" + TEAM + "' AND TR.Date_Sort > '2025-01-01'",
+      order_by: "TR.Date_Sort DESC", limit: "12" })).then(function (j) {
+      return rowsOf(j).map(function (t) {
+        return { event: t.event, place: (t.place || "").replace(/[^0-9\-]/g, "") || t.place,
+                 prize: t.prize ? Math.round(parseFloat(t.prize)) : null };
+      });
+    });
+  }
+
+  function ordinal(p) {
+    var n = parseInt(p, 10); if (isNaN(n)) return esc(p);
+    var s = ["th","st","nd","rd"], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+  function matchRow(m) {
+    var d = new Date(m.dt), right;
+    var soon = !m.o && (d.getTime() - Date.now()) < 36 * 3600e3 && d.getTime() > Date.now();
+    if (m.o === "?") right = '<span class="pill n">No data</span>';
+    else if (m.o) right = (m.s ? '<span class="score">' + esc(m.s) + '</span>' : '') +
+      '<span class="pill ' + (m.o === "W" ? "w" : "l") + '">' + m.o + '</span>';
+    else right = '<span class="pill ' + (soon ? "soon" : "n") + '">' + (soon ? "SOON" : (m.bo ? "Bo" + m.bo : "TBD")) + '</span>';
+    return '<div class="row"><div class="date"><b>' + fDay.format(d) + '</b>' + fWk.format(d) + ' · ' + fTime.format(d) +
+      '</div><div class="mid"><div class="opp">' + esc(m.opp) + '</div><div class="meta">' +
+      esc(m.event || "") + (m.bo && m.o ? " · Bo" + m.bo : "") + '</div></div><div class="right">' + right + '</div></div>';
+  }
+
+  var cdTimer = null;
+  function render() {
+    var now = Date.now();
+    var all = STATE.matches.slice().sort(function (a, b) { return new Date(b.dt) - new Date(a.dt); });
+    var upcoming = all.filter(function (m) { return !m.o && new Date(m.dt).getTime() > now - 3 * 3600e3; })
+                      .sort(function (a, b) { return new Date(a.dt) - new Date(b.dt); });
+    var played = all.filter(function (m) { return m.o; });
+    var decided = played.filter(function (m) { return m.o === "W" || m.o === "L"; });
+
+    var m0 = upcoming[0];
+    if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+    if (!m0) {
+      $("heroVs").textContent = "No scheduled matches";
+      $("heroWhen").textContent = "Nothing on the calendar right now.";
+      $("heroEvent").textContent = "";
+      $("countdown").innerHTML = "";
+    } else {
+      var d0 = new Date(m0.dt);
+      $("heroVs").innerHTML = 'T1 <span class="sep">vs</span> ' + esc(m0.opp);
+      $("heroWhen").textContent = fFull.format(d0) + (m0.bo ? " · Bo" + m0.bo : "");
+      $("heroEvent").textContent = m0.event || "";
+      var tick = function () {
+        var s = Math.round((d0.getTime() - Date.now()) / 1000), box = $("countdown");
+        if (s <= 0) { box.innerHTML = '<div class="cd-cell"><b style="font-size:14px">Starting now</b></div>'; return; }
+        var dd = Math.floor(s / 86400); s -= dd * 86400;
+        var hh = Math.floor(s / 3600);  s -= hh * 3600;
+        var mm = Math.floor(s / 60), ss = s - mm * 60;
+        var cell = function (v, l) { return '<div class="cd-cell"><b>' + String(v).padStart(2, "0") + '</b><span>' + l + '</span></div>'; };
+        box.innerHTML = cell(dd, "days") + cell(hh, "hrs") + cell(mm, "min") + cell(ss, "sec");
+      };
+      tick(); cdTimer = setInterval(tick, 1000);
+    }
+
+    var w = decided.filter(function (m) { return m.o === "W"; }).length, l = decided.length - w;
+    $("tRecord").textContent = decided.length ? w + "–" + l : "—";
+    $("tRecordSub").textContent = decided.length + " decided series";
+    var wr = decided.length ? Math.round(w / decided.length * 100) : 0;
+    $("tWinrate").textContent = decided.length ? wr + "%" : "—";
+    $("tWinbar").style.width = wr + "%";
+    var st = 0, kd = null;
+    for (var i = 0; i < decided.length; i++) {
+      if (kd === null) { kd = decided[i].o; st = 1; }
+      else if (decided[i].o === kd) st++; else break;
+    }
+    $("tStreak").textContent = kd ? st + kd : "—";
+    $("tStreakSub").textContent = kd === "W" ? "consecutive wins" : kd === "L" ? "consecutive losses" : "";
+    $("formStrip").innerHTML = decided.slice(0, 8).reverse().map(function (m) {
+      return '<s class="' + (m.o === "W" ? "w" : "l") + '" title="' + esc(m.opp) + ' — ' + m.o + '">' + m.o + '</s>'; }).join("");
+
+    $("upCount").textContent = "(" + upcoming.length + ")";
+    $("upcoming").innerHTML = upcoming.length ? upcoming.slice(0, 12).map(matchRow).join("")
+      : '<div class="row"><div class="mid" style="color:var(--muted)">No upcoming matches published yet.</div></div>';
+
+    var f = STATE.filter;
+    var list = played.filter(function (m) {
+      var e = (m.event || "").toLowerCase();
+      if (f === "all") return true;
+      if (f === "LCK") return e.indexOf("lck") !== -1;
+      if (f === "KeSPA") return e.indexOf("kespa") !== -1;
+      return /worlds|msi|world cup|ewc|first stand|international/.test(e);
+    });
+    $("recCount").textContent = "(" + played.length + ")";
+    $("recent").innerHTML = list.length ? list.slice(0, 25).map(matchRow).join("")
+      : '<div class="row"><div class="mid" style="color:var(--muted)">Nothing in this category.</div></div>';
+
+    if (STATE.trophies.length) {
+      $("trophies").innerHTML = STATE.trophies.slice(0, 10).map(function (t) {
+        return '<tr><td class="evcol">' + esc(t.event) + '</td><td class="plcol ' + (String(t.place) === "1" ? "place-1" : "") + '">' +
+          (String(t.place) === "1" ? "1st" : ordinal(t.place)) + '</td><td class="num">' +
+          (t.prize ? "$" + t.prize.toLocaleString("en-US") : "—") + '</td></tr>'; }).join("");
+    }
+    if (STATE.roster.length) {
+      $("roster").innerHTML = STATE.roster.map(function (p) {
+        return '<div class="player"><div class="role">' + esc(p.role) + '</div><div class="id">' +
+          esc(p.id) + '</div><div class="name">' + esc(p.name) + '</div></div>'; }).join("");
+    }
+    $("subs").textContent = STATE.subs.length ? "Substitutes / academy: " + STATE.subs.join(" · ") : "";
+  }
+
+  function setStatus(kind, text) { $("dot").className = "dot " + kind; $("statusText").textContent = text; }
+  function stamp() { var n = new Date(); $("updatedText").textContent = fTime.format(n); }
+
+  var loading = false;
+  function load() {
+    if (loading) return;
+    loading = true;
+    var btn = $("refreshBtn");
+    if (btn) btn.disabled = true;
+    setStatus("load", "Checking for live data…");
+    var guard = new Promise(function (_, rej) { setTimeout(function () { rej(new Error("timeout")); }, OVERALL_MS); });
+    Promise.race([Promise.all([fetchMatches(), fetchRoster(), fetchTrophies()]), guard])
+      .then(function (res) {
+        if (!res[0] || !res[0].length) throw new Error("empty");
+        STATE.matches  = res[0];
+        STATE.roster   = (res[1] && res[1].length) ? res[1] : SNAPSHOT.roster;
+        STATE.trophies = (res[2] && res[2].length) ? res[2] : SNAPSHOT.trophies;
+        setStatus("live", "Live · updated just now");
+        render();
+      })
+      .catch(function () {
+        setStatus("cache", "Offline · snapshot from 2026-08-20");
+        render();
+      })
+      .then(function () { loading = false; stamp(); if (btn) btn.disabled = false; });
+  }
+
+  $("refreshBtn").addEventListener("click", load);
+  $("recTabs").addEventListener("click", function (e) {
+    var t = e.target.closest(".tab"); if (!t) return;
+    var tabs = this.querySelectorAll(".tab");
+    for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute("aria-selected", String(tabs[i] === t));
+    STATE.filter = t.getAttribute("data-f");
+    render();
+  });
+  $("navbar").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-p]"); if (!b) return;
+    var btns = this.querySelectorAll("button[data-p]");
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-selected", String(btns[i] === b));
+    var panels = document.querySelectorAll(".panel");
+    for (var j = 0; j < panels.length; j++) panels[j].classList.toggle("on", panels[j].id === "p-" + b.getAttribute("data-p"));
+    window.scrollTo(0, 0);
+  });
+
+  render();
+  stamp();
+  load();
+  setInterval(load, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
+
+  var secure = location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if ("serviceWorker" in navigator && secure) {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    var hint = $("installHint");
+    hint.innerHTML = '<button class="swbtn" id="installBtn">⤓ Install app</button>';
+    $("installBtn").addEventListener("click", function () { e.prompt(); });
+  });
+})();
+</script>
+</body>
+</html>
