@@ -113,8 +113,8 @@ async function getTrophies() {
 
   const sameData = JSON.stringify({ ...out, updatedAt: 0 }) === JSON.stringify({ ...prev, updatedAt: 0 });
   if (sameData) {
-    console.log("No change since last run.");
-    process.exit(78);              // neutral: nothing to commit
+    console.log("No change since last run — leaving data.json as it is.");
+    return;                        // exit 0: the commit step will find nothing staged
   }
 
   fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
