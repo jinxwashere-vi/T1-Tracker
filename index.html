@@ -63,8 +63,9 @@
     border-top:1px solid var(--hair); }
   .drow:first-of-type { border-top:0; }
   .dmark { flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px; }
-  .dmark.ok  { color:var(--good); background:color-mix(in srgb,var(--good) 15%,transparent); }
-  .dmark.bad { color:var(--critical); background:color-mix(in srgb,var(--critical) 15%,transparent); }
+  .dmark.ok   { color:var(--good); background:color-mix(in srgb,var(--good) 15%,transparent); }
+  .dmark.bad  { color:var(--critical); background:color-mix(in srgb,var(--critical) 15%,transparent); }
+  .dmark.skip { color:var(--muted); background:color-mix(in srgb,var(--muted) 15%,transparent); }
   .dl { flex:0 0 auto; color:var(--text-1); }
   .dd { flex:1 1 auto; color:var(--muted); overflow-wrap:anywhere; }
   .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:var(--warning); }
@@ -299,7 +300,12 @@
 
   var SNAPSHOT = {"builtAt":"2026-08-22","matches":[{"dt":"2026-08-23T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":5,"s":null,"o":null},{"dt":"2026-08-21T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":5,"s":null,"o":"W"},{"dt":"2026-08-17T09:00:00Z","opp":"DN Freecs Soopers","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-16T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"0-2","o":"L"},{"dt":"2026-08-14T08:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-08T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-06T10:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-04T06:00:00Z","opp":"Hanwha Life Esports","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-08-03T10:00:00Z","opp":"Nongshim RedForce","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-07-31T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"2-0","o":"W"},{"dt":"2026-07-29T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":3,"s":"0-2","o":"L"},{"dt":"2026-07-21T09:00:00Z","opp":"Gen.G","event":"KeSPA Cup 2026 Group Stage","bo":1,"s":"1-0","o":"W"},{"dt":"2026-07-19T09:00:00Z","opp":"Gen.G","event":"Esports World Cup 2026 Playoffs","bo":3,"s":"1-2","o":"L"}],"roster":[{"role":"Top","id":"Doran","name":"Choi Hyeon-joon"},{"role":"Jungle","id":"Oner","name":"Mun Hyeon-jun"},{"role":"Mid","id":"Faker","name":"Lee Sang-hyeok"},{"role":"Bot","id":"Peyz","name":"Kim Su-hwan"},{"role":"Support","id":"Keria","name":"Ryu Min-seok"}],"subs":["Haetae (Top)","Painter (Jungle)","Guti (Mid)","Cypher (Bot)","Cloud (Support)"],"trophies":[{"event":"LCK 2026 (in progress)","place":"2","prize":null},{"event":"LCK Cup 2026","place":"4","prize":null},{"event":"KeSPA Cup 2025","place":"1","prize":34102},{"event":"Worlds 2025","place":"1","prize":1000000},{"event":"Esports World Cup 2025","place":"3","prize":230000},{"event":"MSI 2025","place":"2","prize":300000}]};
   var TEAM = "T1", API = "https://lol.fandom.com/api.php", SEASON_START = "2026-01-01";
-  var TIMEOUT_MS = 7000, OVERALL_MS = 16000;
+  var TIMEOUT_MS = 8000;         // per request
+  var OVERALL_MS = 60000;        // whole sequential Leaguepedia pass, retries included
+  var QUERY_GAP_MS = 1500;       // polite gap between Cargo queries
+  var STALE_MS = 3 * 3600e3;     // data.json older than this is worth topping up
+  var DIRECT_MIN_GAP = 15 * 60e3;// never hit Leaguepedia more often than this
+  var lastDirect = 0;
 
   var TZ = "Asia/Taipei";
   var fDay  = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, day: "2-digit", month: "short" });
@@ -333,27 +339,39 @@
     return API + "?" + new URLSearchParams(base).toString();
   }
   var DIAG = [];
-  function diag(label, ok, detail) { DIAG.push({ l: label, ok: !!ok, d: String(detail).slice(0, 180) }); }
+  function diag(label, ok, detail) { DIAG.push({ l: label, ok: ok, d: String(detail).slice(0, 180) }); }
+  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function describe(e) {
     if (!e) return "unknown error";
     if (e.name === "AbortError") return "timed out after " + (TIMEOUT_MS / 1000) + "s";
-    if (e.message === "Failed to fetch" || e.message === "Load failed") return "blocked — CORS or no network";
+    if (e.message === "Failed to fetch" || e.message === "Load failed") return "request failed — offline, or the host refused it";
     return e.message || String(e);
   }
 
-  function getJSON(url, label) {
+  /* Leaguepedia's Cargo endpoint rate-limits hard, so every query goes out on its
+     own with a gap between them, and a rate-limit reply is retried with backoff. */
+  function getJSON(url, label, attempt) {
+    attempt = attempt || 1;
     return timedFetch(url, TIMEOUT_MS)
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function (j) { diag(label + " · direct", true, "responded"); return j; })
       .catch(function (e) {
         diag(label + " · direct", false, describe(e));
         return timedFetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url), TIMEOUT_MS)
           .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-          .then(function (j) { diag(label + " · relay", true, "responded"); return j; })
           .catch(function (e2) { diag(label + " · relay", false, describe(e2)); throw e2; });
       })
       .then(function (j) {
-        if (j && j.error) { diag(label + " · query", false, j.error.info || j.error.code || "API error"); throw new Error("query error"); }
+        if (j && j.error) {
+          var msg = j.error.info || j.error.code || "API error";
+          if (/rate limit/i.test(msg) && attempt < 3) {
+            var wait = attempt * 5;
+            diag(label + " · rate limited", "skip", "backing off " + wait + "s, then retrying");
+            return delay(wait * 1000).then(function () { return getJSON(url, label, attempt + 1); });
+          }
+          diag(label, false, msg);
+          throw new Error(msg);
+        }
+        diag(label, true, "responded" + (attempt > 1 ? " (attempt " + attempt + ")" : ""));
         return j;
       });
   }
@@ -502,17 +520,25 @@
   function setStatus(kind, text) { $("dot").className = "dot " + kind; $("statusText").textContent = text; }
   function stamp() { var n = new Date(); $("updatedText").textContent = fTime.format(n); }
 
-  function withGuard(p) {
+  function withGuard(p, ms) {
     return Promise.race([p, new Promise(function (_, rej) {
-      setTimeout(function () { rej(new Error("overall timeout")); }, OVERALL_MS); })]);
+      setTimeout(function () { rej(new Error("overall timeout")); }, ms || OVERALL_MS); })]);
   }
 
+  /* One query at a time, spaced out — never three at once. */
   function tryDirect() {
-    return Promise.all([fetchMatches(), fetchRoster(), fetchTrophies()]).then(function (r) {
-      if (!r[0] || !r[0].length) { diag("Leaguepedia result", false, "0 matches returned"); throw new Error("empty"); }
-      diag("Leaguepedia result", true, r[0].length + " matches, " + r[1].length + " players");
-      return { matches: r[0], roster: r[1], trophies: r[2] };
-    });
+    var out = {};
+    return fetchMatches()
+      .then(function (m) { out.matches = m; return delay(QUERY_GAP_MS); })
+      .then(function () { return fetchRoster(); })
+      .then(function (r) { out.roster = r; return delay(QUERY_GAP_MS); })
+      .then(function () { return fetchTrophies(); })
+      .then(function (t) {
+        out.trophies = t;
+        if (!out.matches.length) { diag("Leaguepedia result", false, "0 matches returned"); throw new Error("empty"); }
+        diag("Leaguepedia result", true, out.matches.length + " matches, " + out.roster.length + " players");
+        return out;
+      });
   }
 
   function tryDataJson() {
@@ -533,17 +559,31 @@
     return fDay.format(d) + " " + fTime.format(d);
   }
 
+  function markOf(ok) { return ok === true ? "ok" : ok === "skip" ? "skip" : "bad"; }
+  function wordOf(ok) { return ok === true ? "OK" : ok === "skip" ? "WAIT" : "FAIL"; }
   function renderDiag() {
     $("diagBody").innerHTML = DIAG.length
       ? DIAG.map(function (x) {
-          return '<div class="drow"><span class="dmark ' + (x.ok ? "ok" : "bad") + '">' + (x.ok ? "OK" : "FAIL") +
+          return '<div class="drow"><span class="dmark ' + markOf(x.ok) + '">' + wordOf(x.ok) +
                  '</span><span class="dl">' + esc(x.l) + '</span><span class="dd">' + esc(x.d) + '</span></div>';
         }).join("")
       : '<div class="drow"><span class="dd">Nothing recorded yet.</span></div>';
   }
 
+  function applyFile(v) {
+    STATE.matches  = v.matches;
+    STATE.roster   = (v.roster && v.roster.length)     ? v.roster   : SNAPSHOT.roster;
+    STATE.subs     = (v.subs && v.subs.length)         ? v.subs     : SNAPSHOT.subs;
+    STATE.trophies = (v.trophies && v.trophies.length) ? v.trophies : SNAPSHOT.trophies;
+  }
+  function applyDirect(v) {
+    STATE.matches  = v.matches;
+    STATE.roster   = v.roster.length   ? v.roster   : SNAPSHOT.roster;
+    STATE.trophies = v.trophies.length ? v.trophies : SNAPSHOT.trophies;
+  }
+
   var loading = false;
-  function load() {
+  function load(force) {
     if (loading) return;
     loading = true;
     DIAG = [];
@@ -551,32 +591,46 @@
     if (btn) btn.disabled = true;
     setStatus("load", "Checking for updates…");
 
-    Promise.allSettled([withGuard(tryDirect()), withGuard(tryDataJson())]).then(function (res) {
-      var direct = res[0], file = res[1];
-      if (direct.status === "fulfilled") {
-        STATE.matches  = direct.value.matches;
-        STATE.roster   = direct.value.roster.length   ? direct.value.roster   : SNAPSHOT.roster;
-        STATE.trophies = direct.value.trophies.length ? direct.value.trophies : SNAPSHOT.trophies;
-        setStatus("live", "Live · straight from Leaguepedia");
-      } else if (file.status === "fulfilled") {
-        var v = file.value;
-        STATE.matches  = v.matches;
-        STATE.roster   = (v.roster && v.roster.length)     ? v.roster   : SNAPSHOT.roster;
-        STATE.subs     = (v.subs && v.subs.length)         ? v.subs     : SNAPSHOT.subs;
-        STATE.trophies = (v.trophies && v.trophies.length) ? v.trophies : SNAPSHOT.trophies;
-        setStatus("live", "Synced · " + shortDate(v.updatedAt));
-      } else {
-        setStatus("cache", "Offline · snapshot from 2026-08-22");
-      }
+    var finish = function () { loading = false; stamp(); renderDiag(); if (btn) btn.disabled = false; };
+
+    /* data.json is same-origin, instant, and never rate-limited — it renders first. */
+    withGuard(tryDataJson(), 12000).then(function (v) {
+      applyFile(v);
+      setStatus("live", "Synced · " + shortDate(v.updatedAt));
       render();
-      renderDiag();
-      loading = false;
-      stamp();
-      if (btn) btn.disabled = false;
+
+      var age = Date.now() - new Date(v.updatedAt).getTime();
+      var since = Date.now() - lastDirect;
+      if (!force && !(age > STALE_MS)) {
+        diag("Leaguepedia · direct", "skip", "not needed — data.json is " + Math.round(age / 3600e3) + "h old");
+        return finish();
+      }
+      if (!force && since < DIRECT_MIN_GAP) {
+        diag("Leaguepedia · direct", "skip", "asked " + Math.round(since / 60e3) + " min ago, holding off");
+        return finish();
+      }
+      return topUp(finish);
+    }, function () {
+      /* no data.json at all — Leaguepedia is the only hope */
+      return topUp(finish, true);
     });
   }
 
-  $("refreshBtn").addEventListener("click", load);
+  function topUp(finish, isOnlySource) {
+    lastDirect = Date.now();
+    return withGuard(tryDirect(), OVERALL_MS).then(function (d) {
+      applyDirect(d);
+      setStatus("live", "Live · straight from Leaguepedia");
+      render();
+      finish();
+    }, function () {
+      if (isOnlySource) setStatus("cache", "Offline · snapshot from 2026-08-22");
+      /* otherwise keep the data.json view and its green dot — the top-up was a bonus */
+      finish();
+    });
+  }
+
+  $("refreshBtn").addEventListener("click", function () { load(true); });
   $("statusBar").addEventListener("click", function () {
     var d = $("diag"), open = d.hasAttribute("hidden");
     if (open) { d.removeAttribute("hidden"); } else { d.setAttribute("hidden", ""); }
@@ -609,9 +663,9 @@
 
   render();
   stamp();
-  load();
-  setInterval(load, 5 * 60 * 1000);
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
+  load(false);
+  setInterval(function () { load(false); }, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) load(false); });
 
   var secure = location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
   if ("serviceWorker" in navigator && secure) {

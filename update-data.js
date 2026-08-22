@@ -11,14 +11,35 @@ const SEASON_START = new Date().getUTCFullYear() + "-01-01";
 const OUT = path.join(__dirname, "data.json");
 const UA = "t1-schedule-pwa/1.0 (personal fan schedule; github actions)";
 
-async function cargo(params) {
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* Leaguepedia rate-limits the Cargo endpoint hard. Never fire these in parallel;
+   back off and retry when it says so. */
+async function cargo(params, attempt = 1) {
   const qs = new URLSearchParams(Object.assign(
     { action: "cargoquery", format: "json", origin: "*" }, params));
   const url = API + "?" + qs.toString();
   const res = await fetch(url, { headers: { "User-Agent": UA, "Accept": "application/json" } });
+
+  if (res.status === 429 && attempt <= 4) {
+    const wait = attempt * 10;
+    console.log(`  HTTP 429 on ${params.tables}, waiting ${wait}s (attempt ${attempt})`);
+    await sleep(wait * 1000);
+    return cargo(params, attempt + 1);
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${params.tables}`);
+
   const j = await res.json();
-  if (j.error) throw new Error(`API error on ${params.tables}: ${j.error.info || j.error.code}`);
+  if (j.error) {
+    const msg = j.error.info || j.error.code;
+    if (/rate limit/i.test(msg) && attempt <= 4) {
+      const wait = attempt * 10;
+      console.log(`  Rate limited on ${params.tables}, waiting ${wait}s (attempt ${attempt})`);
+      await sleep(wait * 1000);
+      return cargo(params, attempt + 1);
+    }
+    throw new Error(`API error on ${params.tables}: ${msg}`);
+  }
   if (!j.cargoquery) throw new Error(`No cargoquery in response for ${params.tables}`);
   return j.cargoquery.map(x => x.title);
 }
@@ -84,15 +105,24 @@ async function getTrophies() {
   }));
 }
 
-(async () => {
-  const results = await Promise.allSettled([getMatches(), getRoster(), getTrophies()]);
-  const [mR, rR, tR] = results;
+/* strictly one at a time, with a gap — parallel requests trip the rate limiter */
+async function step(name, fn) {
+  try {
+    const v = await fn();
+    console.log(`ok ${name}: ${v.length} rows`);
+    return { status: "fulfilled", value: v };
+  } catch (e) {
+    console.error(`FAILED ${name}: ${e.message}`);
+    return { status: "rejected", reason: e };
+  }
+}
 
-  results.forEach((r, i) => {
-    const name = ["matches", "roster", "trophies"][i];
-    if (r.status === "rejected") console.error(`FAILED ${name}: ${r.reason.message}`);
-    else console.log(`ok ${name}: ${r.value.length} rows`);
-  });
+(async () => {
+  const mR = await step("matches", getMatches);
+  await sleep(2000);
+  const rR = await step("roster", getRoster);
+  await sleep(2000);
+  const tR = await step("trophies", getTrophies);
 
   if (mR.status !== "fulfilled" || mR.value.length === 0) {
     console.error("Matches could not be fetched — leaving data.json untouched.");
