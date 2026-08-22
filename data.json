@@ -1,0 +1,176 @@
+{
+ "updatedAt": "2026-08-22T00:00:00Z",
+ "source": "seed (built by Claude, replaced by the daily GitHub Action)",
+ "matches": [
+  {
+   "dt": "2026-08-23T08:00:00Z",
+   "opp": "Hanwha Life Esports",
+   "event": "LCK 2026",
+   "bo": 5,
+   "s": null,
+   "o": null
+  },
+  {
+   "dt": "2026-08-21T10:00:00Z",
+   "opp": "KT Rolster",
+   "event": "LCK 2026",
+   "bo": 5,
+   "s": null,
+   "o": "W"
+  },
+  {
+   "dt": "2026-08-17T09:00:00Z",
+   "opp": "DN Freecs Soopers",
+   "event": "KeSPA Cup 2026",
+   "bo": 3,
+   "s": null,
+   "o": "W"
+  },
+  {
+   "dt": "2026-08-16T08:00:00Z",
+   "opp": "Gen.G",
+   "event": "LCK 2026",
+   "bo": 3,
+   "s": "0-2",
+   "o": "L"
+  },
+  {
+   "dt": "2026-08-14T08:00:00Z",
+   "opp": "Dplus KIA",
+   "event": "LCK 2026",
+   "bo": 3,
+   "s": null,
+   "o": "L"
+  },
+  {
+   "dt": "2026-08-08T08:00:00Z",
+   "opp": "Hanwha Life Esports",
+   "event": "LCK 2026",
+   "bo": 3,
+   "s": null,
+   "o": "W"
+  },
+  {
+   "dt": "2026-08-06T10:00:00Z",
+   "opp": "Dplus KIA",
+   "event": "LCK 2026",
+   "bo": 3,
+   "s": null,
+   "o": "L"
+  },
+  {
+   "dt": "2026-08-04T06:00:00Z",
+   "opp": "Hanwha Life Esports",
+   "event": "KeSPA Cup 2026",
+   "bo": 3,
+   "s": null,
+   "o": "?"
+  },
+  {
+   "dt": "2026-08-03T10:00:00Z",
+   "opp": "Nongshim RedForce",
+   "event": "KeSPA Cup 2026",
+   "bo": 3,
+   "s": null,
+   "o": "W"
+  },
+  {
+   "dt": "2026-07-31T08:00:00Z",
+   "opp": "Gen.G",
+   "event": "LCK 2026",
+   "bo": 3,
+   "s": "2-0",
+   "o": "W"
+  },
+  {
+   "dt": "2026-07-29T10:00:00Z",
+   "opp": "KT Rolster",
+   "event": "LCK 2026",
+   "bo": 3,
+   "s": "0-2",
+   "o": "L"
+  },
+  {
+   "dt": "2026-07-21T09:00:00Z",
+   "opp": "Gen.G",
+   "event": "KeSPA Cup 2026 Group Stage",
+   "bo": 1,
+   "s": "1-0",
+   "o": "W"
+  },
+  {
+   "dt": "2026-07-19T09:00:00Z",
+   "opp": "Gen.G",
+   "event": "Esports World Cup 2026 Playoffs",
+   "bo": 3,
+   "s": "1-2",
+   "o": "L"
+  }
+ ],
+ "roster": [
+  {
+   "role": "Top",
+   "id": "Doran",
+   "name": "Choi Hyeon-joon"
+  },
+  {
+   "role": "Jungle",
+   "id": "Oner",
+   "name": "Mun Hyeon-jun"
+  },
+  {
+   "role": "Mid",
+   "id": "Faker",
+   "name": "Lee Sang-hyeok"
+  },
+  {
+   "role": "Bot",
+   "id": "Peyz",
+   "name": "Kim Su-hwan"
+  },
+  {
+   "role": "Support",
+   "id": "Keria",
+   "name": "Ryu Min-seok"
+  }
+ ],
+ "subs": [
+  "Haetae (Top)",
+  "Painter (Jungle)",
+  "Guti (Mid)",
+  "Cypher (Bot)",
+  "Cloud (Support)"
+ ],
+ "trophies": [
+  {
+   "event": "LCK 2026 (in progress)",
+   "place": "2",
+   "prize": null
+  },
+  {
+   "event": "LCK Cup 2026",
+   "place": "4",
+   "prize": null
+  },
+  {
+   "event": "KeSPA Cup 2025",
+   "place": "1",
+   "prize": 34102
+  },
+  {
+   "event": "Worlds 2025",
+   "place": "1",
+   "prize": 1000000
+  },
+  {
+   "event": "Esports World Cup 2025",
+   "place": "3",
+   "prize": 230000
+  },
+  {
+   "event": "MSI 2025",
+   "place": "2",
+   "prize": 300000
+  }
+ ]
+}

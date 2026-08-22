@@ -1,4 +1,4 @@
-const CACHE = "t1-schedule-2026-08-20";
+const CACHE = "t1-schedule-2026-08-22";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
@@ -15,13 +15,14 @@ self.addEventListener("fetch", function (e) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;          // never cache the esports API
+  var key = url.pathname.indexOf("data.json") !== -1 ? url.origin + url.pathname : req;
   e.respondWith(
     fetch(req).then(function (res) {
       var copy = res.clone();
-      caches.open(CACHE).then(function (c) { c.put(req, copy); });
+      caches.open(CACHE).then(function (c) { c.put(key, copy); });
       return res;
     }).catch(function () {
-      return caches.match(req).then(function (hit) { return hit || caches.match("./index.html"); });
+      return caches.match(key).then(function (hit) { return hit || caches.match("./index.html"); });
     })
   );
 });

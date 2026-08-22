@@ -21,7 +21,7 @@
     --text-1:#ffffff; --text-2:#c3c2b7; --muted:#898781;
     --hair:rgba(255,255,255,0.10); --grid:#2c2c2a;
     --good:#0ca30c; --critical:#d03b3b; --warning:#fab219; --gold:#fab219;
-    --accent:#ff2d4b; --series-1:#3987e5; --radius:14px;
+    --accent:#d8c29d; --series-1:#3987e5; --radius:14px;
     --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
   }
   html:has(#lightMode:checked) {
@@ -29,7 +29,7 @@
     --plane:#f9f9f7; --surface-1:#fcfcfb; --surface-2:#f2f1ed;
     --text-1:#0b0b0b; --text-2:#52514e; --muted:#898781;
     --hair:rgba(11,11,11,0.10); --grid:#e1e0d9;
-    --gold:#8a5a00; --accent:#d1002a; --series-1:#2a78d6;
+    --gold:#8a5a00; --accent:#7a6440; --series-1:#2a78d6;
   }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   #lightMode { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
@@ -41,8 +41,7 @@
   .appbar { position:sticky; top:0; z-index:20; background:var(--plane);
     border-bottom:1px solid var(--hair); padding:calc(var(--safe-t) + 10px) 16px 10px;
     display:flex; align-items:center; gap:10px; }
-  .crest { width:32px; height:32px; border-radius:9px; background:var(--accent); color:#fff;
-    display:grid; place-items:center; font-weight:800; font-size:14px; flex:0 0 auto; }
+  .crest { width:34px; height:34px; border-radius:9px; flex:0 0 auto; display:block; }
   .appbar h1 { margin:0; font-size:17px; font-weight:700; letter-spacing:-.01em; }
   .appbar .tzline { font-size:11px; color:var(--muted); margin-top:-1px; }
   .grow { flex:1 1 auto; }
@@ -53,7 +52,21 @@
   .iconbtn[disabled] { opacity:.5; }
 
   .statusbar { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2);
-    padding:8px 16px; border-bottom:1px solid var(--hair); background:var(--surface-1); }
+    padding:8px 16px; border-bottom:1px solid var(--hair); background:var(--surface-1);
+    width:100%; border-left:0; border-right:0; border-top:0; font-family:inherit;
+    text-align:left; cursor:pointer; }
+  .chev { font-size:10px; color:var(--muted); }
+  .diag { background:var(--surface-1); border-bottom:1px solid var(--hair); padding:12px 16px; }
+  .diag h3 { margin:0 0 8px; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; }
+  .drow { display:flex; gap:8px; align-items:baseline; font-size:11.5px; padding:4px 0;
+    border-top:1px solid var(--hair); }
+  .drow:first-of-type { border-top:0; }
+  .dmark { flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px; }
+  .dmark.ok  { color:var(--good); background:color-mix(in srgb,var(--good) 15%,transparent); }
+  .dmark.bad { color:var(--critical); background:color-mix(in srgb,var(--critical) 15%,transparent); }
+  .dl { flex:0 0 auto; color:var(--text-1); }
+  .dd { flex:1 1 auto; color:var(--muted); overflow-wrap:anywhere; }
   .dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; background:var(--warning); }
   .dot.live { background:var(--good); box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent); }
   .dot.cache { background:var(--warning); }
@@ -159,7 +172,7 @@
 <input type="checkbox" id="lightMode" aria-label="Switch to light theme">
 
 <div class="appbar">
-  <div class="crest">T1</div>
+  <img class="crest" src="./icon-192.png" alt="T1" width="34" height="34">
   <div>
     <h1>T1 Schedule</h1>
     <div class="tzline">Taipei time · UTC+8</div>
@@ -168,11 +181,18 @@
   <button class="iconbtn" id="refreshBtn" aria-label="Refresh" title="Refresh">↻</button>
 </div>
 
-<div class="statusbar">
+<button class="statusbar" id="statusBar" aria-expanded="false" aria-controls="diag">
   <span class="dot cache" id="dot"></span>
-  <span id="statusText">Built-in snapshot · 2026-08-20</span>
+  <span id="statusText">Built-in snapshot · 2026-08-22</span>
   <span class="grow"></span>
   <span id="updatedText"></span>
+  <span class="chev" id="chev">▾</span>
+</button>
+
+<div class="diag" id="diag" hidden>
+  <h3>Where the data came from</h3>
+  <div id="diagBody"></div>
+  <button class="swbtn" id="copyDiag" style="margin-top:10px;font-size:12px">Copy report</button>
 </div>
 
 <main>
@@ -180,17 +200,14 @@
   <section class="panel on" id="p-schedule">
     <div class="hero">
       <p class="eyebrow">Next match</p>
-      <div class="vs" id="heroVs">T1 <span class="sep">vs</span> KT Rolster</div>
-      <p class="when" id="heroWhen">Friday 21 August at 18:00 · Bo5</p>
+      <div class="vs" id="heroVs">T1 <span class="sep">vs</span> Hanwha Life Esports</div>
+      <p class="when" id="heroWhen">Sunday 23 August at 16:00 · Bo5</p>
       <p class="event" id="heroEvent">LCK 2026</p>
       <div class="countdown" id="countdown"></div>
     </div>
 
-    <h2>Upcoming <span class="count" id="upCount">(2)</span></h2>
+    <h2>Upcoming <span class="count" id="upCount">(1)</span></h2>
     <div class="card" id="upcoming"><div class="row">
-      <div class="date"><b>21 Aug</b>Fri · 18:00</div>
-      <div class="mid"><div class="opp">KT Rolster</div><div class="meta">LCK 2026</div></div>
-      <div class="right"><span class="pill n">Bo5</span></div></div><div class="row">
       <div class="date"><b>23 Aug</b>Sun · 16:00</div>
       <div class="mid"><div class="opp">Hanwha Life Esports</div><div class="meta">LCK 2026</div></div>
       <div class="right"><span class="pill n">Bo5</span></div></div></div>
@@ -198,15 +215,18 @@
 
   <section class="panel" id="p-results">
     <div class="tiles">
-      <div class="tile"><div class="label">2026 record</div><div class="value" id="tRecord">4–4</div><div class="sub" id="tRecordSub">8 decided series</div></div>
-      <div class="tile"><div class="label">Win rate</div><div class="value" id="tWinrate">50%</div><div class="meter"><i id="tWinbar" style="width:50%"></i></div></div>
-      <div class="tile"><div class="label">Streak</div><div class="value" id="tStreak">1W</div><div class="sub" id="tStreakSub">consecutive wins</div></div>
-      <div class="tile"><div class="label">Recent form</div><div class="form-strip" id="formStrip"><s class="l" title="Gen.G — L">L</s><s class="w" title="Gen.G — W">W</s><s class="w" title="Gen.G — W">W</s><s class="l" title="Dplus KIA — L">L</s><s class="w" title="Hanwha Life Esports — W">W</s><s class="l" title="Dplus KIA — L">L</s><s class="l" title="Gen.G — L">L</s><s class="w" title="DN Freecs Soopers — W">W</s></div></div>
+      <div class="tile"><div class="label">2026 record</div><div class="value" id="tRecord">6–5</div><div class="sub" id="tRecordSub">11 decided series</div></div>
+      <div class="tile"><div class="label">Win rate</div><div class="value" id="tWinrate">55%</div><div class="meter"><i id="tWinbar" style="width:55%"></i></div></div>
+      <div class="tile"><div class="label">Streak</div><div class="value" id="tStreak">2W</div><div class="sub" id="tStreakSub">consecutive wins</div></div>
+      <div class="tile"><div class="label">Recent form</div><div class="form-strip" id="formStrip"><s class="w" title="Gen.G — W">W</s><s class="w" title="Nongshim RedForce — W">W</s><s class="l" title="Dplus KIA — L">L</s><s class="w" title="Hanwha Life Esports — W">W</s><s class="l" title="Dplus KIA — L">L</s><s class="l" title="Gen.G — L">L</s><s class="w" title="DN Freecs Soopers — W">W</s><s class="w" title="KT Rolster — W">W</s></div></div>
     </div>
 
-    <h2>Recent results <span class="count" id="recCount">(11)</span></h2>
+    <h2>Recent results <span class="count" id="recCount">(12)</span></h2>
     <span id="tabSlot"></span>
     <div class="card" id="recent"><div class="row">
+      <div class="date"><b>21 Aug</b>Fri · 18:00</div>
+      <div class="mid"><div class="opp">KT Rolster</div><div class="meta">LCK 2026 · Bo5</div></div>
+      <div class="right"><span class="pill w">W</span></div></div><div class="row">
       <div class="date"><b>17 Aug</b>Mon · 17:00</div>
       <div class="mid"><div class="opp">DN Freecs Soopers</div><div class="meta">KeSPA Cup 2026 · Bo3</div></div>
       <div class="right"><span class="pill w">W</span></div></div><div class="row">
@@ -227,13 +247,13 @@
       <div class="right"><span class="pill n">No data</span></div></div><div class="row">
       <div class="date"><b>03 Aug</b>Mon · 18:00</div>
       <div class="mid"><div class="opp">Nongshim RedForce</div><div class="meta">KeSPA Cup 2026 · Bo3</div></div>
-      <div class="right"><span class="pill n">No data</span></div></div><div class="row">
+      <div class="right"><span class="pill w">W</span></div></div><div class="row">
       <div class="date"><b>31 Jul</b>Fri · 16:00</div>
       <div class="mid"><div class="opp">Gen.G</div><div class="meta">LCK 2026 · Bo3</div></div>
       <div class="right"><span class="score">2-0</span><span class="pill w">W</span></div></div><div class="row">
       <div class="date"><b>29 Jul</b>Wed · 18:00</div>
       <div class="mid"><div class="opp">KT Rolster</div><div class="meta">LCK 2026 · Bo3</div></div>
-      <div class="right"><span class="pill n">No data</span></div></div><div class="row">
+      <div class="right"><span class="score">0-2</span><span class="pill l">L</span></div></div><div class="row">
       <div class="date"><b>21 Jul</b>Tue · 17:00</div>
       <div class="mid"><div class="opp">Gen.G</div><div class="meta">KeSPA Cup 2026 Group Stage · Bo1</div></div>
       <div class="right"><span class="score">1-0</span><span class="pill w">W</span></div></div><div class="row">
@@ -259,7 +279,7 @@
     </div>
 
     <footer>
-      <div>Live data comes from the Leaguepedia Cargo API, fetched by your phone each time you open the app. When it can't be reached, the built-in snapshot from 2026-08-20 is shown instead and the dot turns amber.</div>
+      <div>Live data comes from the Leaguepedia Cargo API, fetched by your phone each time you open the app. When it can't be reached, the built-in snapshot from 2026-08-22 is shown instead and the dot turns amber.</div>
       <div style="margin-top:6px">Sources: <a href="https://lol.fandom.com/wiki/T1" target="_blank" rel="noopener">Leaguepedia</a> · <a href="https://game-tournaments.com/en/lol/team/t1" target="_blank" rel="noopener">game-tournaments</a> · <a href="https://lolesports.com/teams/t1" target="_blank" rel="noopener">LoL Esports</a></div>
     </footer>
   </section>
@@ -277,7 +297,7 @@
   "use strict";
   document.body.classList.add("js");
 
-  var SNAPSHOT = {"builtAt":"2026-08-20","matches":[{"dt":"2026-08-23T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":5,"s":null,"o":null},{"dt":"2026-08-21T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":5,"s":null,"o":null},{"dt":"2026-08-17T09:00:00Z","opp":"DN Freecs Soopers","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-16T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"0-2","o":"L"},{"dt":"2026-08-14T08:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-08T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-06T10:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-04T06:00:00Z","opp":"Hanwha Life Esports","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-08-03T10:00:00Z","opp":"Nongshim RedForce","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-07-31T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"2-0","o":"W"},{"dt":"2026-07-29T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-07-21T09:00:00Z","opp":"Gen.G","event":"KeSPA Cup 2026 Group Stage","bo":1,"s":"1-0","o":"W"},{"dt":"2026-07-19T09:00:00Z","opp":"Gen.G","event":"Esports World Cup 2026 Playoffs","bo":3,"s":"1-2","o":"L"}],"roster":[{"role":"Top","id":"Doran","name":"Choi Hyeon-joon"},{"role":"Jungle","id":"Oner","name":"Mun Hyeon-jun"},{"role":"Mid","id":"Faker","name":"Lee Sang-hyeok"},{"role":"Bot","id":"Peyz","name":"Kim Su-hwan"},{"role":"Support","id":"Keria","name":"Ryu Min-seok"}],"subs":["Haetae (Top)","Painter (Jungle)","Guti (Mid)","Cypher (Bot)","Cloud (Support)"],"trophies":[{"event":"LCK 2026 (in progress)","place":"2","prize":null},{"event":"LCK Cup 2026","place":"4","prize":null},{"event":"KeSPA Cup 2025","place":"1","prize":34102},{"event":"Worlds 2025","place":"1","prize":1000000},{"event":"Esports World Cup 2025","place":"3","prize":230000},{"event":"MSI 2025","place":"2","prize":300000}]};
+  var SNAPSHOT = {"builtAt":"2026-08-22","matches":[{"dt":"2026-08-23T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":5,"s":null,"o":null},{"dt":"2026-08-21T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":5,"s":null,"o":"W"},{"dt":"2026-08-17T09:00:00Z","opp":"DN Freecs Soopers","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-16T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"0-2","o":"L"},{"dt":"2026-08-14T08:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-08T08:00:00Z","opp":"Hanwha Life Esports","event":"LCK 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-08-06T10:00:00Z","opp":"Dplus KIA","event":"LCK 2026","bo":3,"s":null,"o":"L"},{"dt":"2026-08-04T06:00:00Z","opp":"Hanwha Life Esports","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"?"},{"dt":"2026-08-03T10:00:00Z","opp":"Nongshim RedForce","event":"KeSPA Cup 2026","bo":3,"s":null,"o":"W"},{"dt":"2026-07-31T08:00:00Z","opp":"Gen.G","event":"LCK 2026","bo":3,"s":"2-0","o":"W"},{"dt":"2026-07-29T10:00:00Z","opp":"KT Rolster","event":"LCK 2026","bo":3,"s":"0-2","o":"L"},{"dt":"2026-07-21T09:00:00Z","opp":"Gen.G","event":"KeSPA Cup 2026 Group Stage","bo":1,"s":"1-0","o":"W"},{"dt":"2026-07-19T09:00:00Z","opp":"Gen.G","event":"Esports World Cup 2026 Playoffs","bo":3,"s":"1-2","o":"L"}],"roster":[{"role":"Top","id":"Doran","name":"Choi Hyeon-joon"},{"role":"Jungle","id":"Oner","name":"Mun Hyeon-jun"},{"role":"Mid","id":"Faker","name":"Lee Sang-hyeok"},{"role":"Bot","id":"Peyz","name":"Kim Su-hwan"},{"role":"Support","id":"Keria","name":"Ryu Min-seok"}],"subs":["Haetae (Top)","Painter (Jungle)","Guti (Mid)","Cypher (Bot)","Cloud (Support)"],"trophies":[{"event":"LCK 2026 (in progress)","place":"2","prize":null},{"event":"LCK Cup 2026","place":"4","prize":null},{"event":"KeSPA Cup 2025","place":"1","prize":34102},{"event":"Worlds 2025","place":"1","prize":1000000},{"event":"Esports World Cup 2025","place":"3","prize":230000},{"event":"MSI 2025","place":"2","prize":300000}]};
   var TEAM = "T1", API = "https://lol.fandom.com/api.php", SEASON_START = "2026-01-01";
   var TIMEOUT_MS = 7000, OVERALL_MS = 16000;
 
@@ -312,12 +332,29 @@
     for (var k in params) base[k] = params[k];
     return API + "?" + new URLSearchParams(base).toString();
   }
-  function getJSON(url) {
+  var DIAG = [];
+  function diag(label, ok, detail) { DIAG.push({ l: label, ok: !!ok, d: String(detail).slice(0, 180) }); }
+  function describe(e) {
+    if (!e) return "unknown error";
+    if (e.name === "AbortError") return "timed out after " + (TIMEOUT_MS / 1000) + "s";
+    if (e.message === "Failed to fetch" || e.message === "Load failed") return "blocked — CORS or no network";
+    return e.message || String(e);
+  }
+
+  function getJSON(url, label) {
     return timedFetch(url, TIMEOUT_MS)
-      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-      .catch(function () {
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { diag(label + " · direct", true, "responded"); return j; })
+      .catch(function (e) {
+        diag(label + " · direct", false, describe(e));
         return timedFetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url), TIMEOUT_MS)
-          .then(function (r) { if (!r.ok) throw new Error("relay"); return r.json(); });
+          .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+          .then(function (j) { diag(label + " · relay", true, "responded"); return j; })
+          .catch(function (e2) { diag(label + " · relay", false, describe(e2)); throw e2; });
+      })
+      .then(function (j) {
+        if (j && j.error) { diag(label + " · query", false, j.error.info || j.error.code || "API error"); throw new Error("query error"); }
+        return j;
       });
   }
   function rowsOf(j) { return (j && j.cargoquery) ? j.cargoquery.map(function (x) { return x.title; }) : []; }
@@ -331,7 +368,7 @@
       fields: "MS.DateTime_UTC=dt,MS.Team1=t1,MS.Team2=t2,MS.Team1Score=s1,MS.Team2Score=s2,MS.BestOf=bo,MS.OverviewPage=page",
       where: "(MS.Team1='" + TEAM + "' OR MS.Team2='" + TEAM + "') AND MS.DateTime_UTC > '" + SEASON_START + "'",
       order_by: "MS.DateTime_UTC DESC", limit: "300"
-    })).then(function (j) {
+    }), "Matches").then(function (j) {
       return rowsOf(j).map(function (m) {
         var home = m.t1 === TEAM;
         var a = (m.s1 === "" || m.s1 == null) ? null : parseInt(m.s1, 10);
@@ -346,7 +383,7 @@
   }
   function fetchRoster() {
     return getJSON(cargoURL({ tables: "Players=P", fields: "P.ID=id,P.Role=role,P.Name=name",
-      where: "P.Team='" + TEAM + "'", limit: "30" })).then(function (j) {
+      where: "P.Team='" + TEAM + "'", limit: "30" }), "Roster").then(function (j) {
       var O = { top:0, jungle:1, mid:2, bot:3, support:4 };
       return rowsOf(j).map(function (p) { return { id: p.id, name: p.name || "", role: (p.role || "").trim() }; })
         .filter(function (p) { return p.id && O[p.role.toLowerCase()] !== undefined; })
@@ -358,7 +395,7 @@
     return getJSON(cargoURL({ tables: "TournamentResults=TR",
       fields: "TR.Event=event,TR.Place=place,TR.Prize_USD=prize,TR.Date_Sort=date",
       where: "TR.Team='" + TEAM + "' AND TR.Date_Sort > '2025-01-01'",
-      order_by: "TR.Date_Sort DESC", limit: "12" })).then(function (j) {
+      order_by: "TR.Date_Sort DESC", limit: "12" }), "Trophies").then(function (j) {
       return rowsOf(j).map(function (t) {
         return { event: t.event, place: (t.place || "").replace(/[^0-9\-]/g, "") || t.place,
                  prize: t.prize ? Math.round(parseFloat(t.prize)) : null };
@@ -465,31 +502,95 @@
   function setStatus(kind, text) { $("dot").className = "dot " + kind; $("statusText").textContent = text; }
   function stamp() { var n = new Date(); $("updatedText").textContent = fTime.format(n); }
 
+  function withGuard(p) {
+    return Promise.race([p, new Promise(function (_, rej) {
+      setTimeout(function () { rej(new Error("overall timeout")); }, OVERALL_MS); })]);
+  }
+
+  function tryDirect() {
+    return Promise.all([fetchMatches(), fetchRoster(), fetchTrophies()]).then(function (r) {
+      if (!r[0] || !r[0].length) { diag("Leaguepedia result", false, "0 matches returned"); throw new Error("empty"); }
+      diag("Leaguepedia result", true, r[0].length + " matches, " + r[1].length + " players");
+      return { matches: r[0], roster: r[1], trophies: r[2] };
+    });
+  }
+
+  function tryDataJson() {
+    return timedFetch("./data.json?t=" + Date.now(), TIMEOUT_MS)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) {
+        if (!j || !j.matches || !j.matches.length) throw new Error("no matches in data.json");
+        diag("data.json (same origin)", true, j.matches.length + " matches · built " + shortDate(j.updatedAt));
+        return j;
+      })
+      .catch(function (e) { diag("data.json (same origin)", false, describe(e)); throw e; });
+  }
+
+  function shortDate(iso) {
+    if (!iso) return "unknown";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return fDay.format(d) + " " + fTime.format(d);
+  }
+
+  function renderDiag() {
+    $("diagBody").innerHTML = DIAG.length
+      ? DIAG.map(function (x) {
+          return '<div class="drow"><span class="dmark ' + (x.ok ? "ok" : "bad") + '">' + (x.ok ? "OK" : "FAIL") +
+                 '</span><span class="dl">' + esc(x.l) + '</span><span class="dd">' + esc(x.d) + '</span></div>';
+        }).join("")
+      : '<div class="drow"><span class="dd">Nothing recorded yet.</span></div>';
+  }
+
   var loading = false;
   function load() {
     if (loading) return;
     loading = true;
+    DIAG = [];
     var btn = $("refreshBtn");
     if (btn) btn.disabled = true;
-    setStatus("load", "Checking for live data…");
-    var guard = new Promise(function (_, rej) { setTimeout(function () { rej(new Error("timeout")); }, OVERALL_MS); });
-    Promise.race([Promise.all([fetchMatches(), fetchRoster(), fetchTrophies()]), guard])
-      .then(function (res) {
-        if (!res[0] || !res[0].length) throw new Error("empty");
-        STATE.matches  = res[0];
-        STATE.roster   = (res[1] && res[1].length) ? res[1] : SNAPSHOT.roster;
-        STATE.trophies = (res[2] && res[2].length) ? res[2] : SNAPSHOT.trophies;
-        setStatus("live", "Live · updated just now");
-        render();
-      })
-      .catch(function () {
-        setStatus("cache", "Offline · snapshot from 2026-08-20");
-        render();
-      })
-      .then(function () { loading = false; stamp(); if (btn) btn.disabled = false; });
+    setStatus("load", "Checking for updates…");
+
+    Promise.allSettled([withGuard(tryDirect()), withGuard(tryDataJson())]).then(function (res) {
+      var direct = res[0], file = res[1];
+      if (direct.status === "fulfilled") {
+        STATE.matches  = direct.value.matches;
+        STATE.roster   = direct.value.roster.length   ? direct.value.roster   : SNAPSHOT.roster;
+        STATE.trophies = direct.value.trophies.length ? direct.value.trophies : SNAPSHOT.trophies;
+        setStatus("live", "Live · straight from Leaguepedia");
+      } else if (file.status === "fulfilled") {
+        var v = file.value;
+        STATE.matches  = v.matches;
+        STATE.roster   = (v.roster && v.roster.length)     ? v.roster   : SNAPSHOT.roster;
+        STATE.subs     = (v.subs && v.subs.length)         ? v.subs     : SNAPSHOT.subs;
+        STATE.trophies = (v.trophies && v.trophies.length) ? v.trophies : SNAPSHOT.trophies;
+        setStatus("live", "Synced · " + shortDate(v.updatedAt));
+      } else {
+        setStatus("cache", "Offline · snapshot from 2026-08-22");
+      }
+      render();
+      renderDiag();
+      loading = false;
+      stamp();
+      if (btn) btn.disabled = false;
+    });
   }
 
   $("refreshBtn").addEventListener("click", load);
+  $("statusBar").addEventListener("click", function () {
+    var d = $("diag"), open = d.hasAttribute("hidden");
+    if (open) { d.removeAttribute("hidden"); } else { d.setAttribute("hidden", ""); }
+    this.setAttribute("aria-expanded", String(open));
+    $("chev").textContent = open ? "▴" : "▾";
+  });
+  $("copyDiag").addEventListener("click", function () {
+    var txt = "T1 app diagnostics\n" + new Date().toISOString() + "\n" + location.href + "\n" +
+      DIAG.map(function (x) { return (x.ok ? "OK   " : "FAIL ") + x.l + " — " + x.d; }).join("\n");
+    var btn = this;
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy report"; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () { window.prompt("Copy this:", txt); });
+    else window.prompt("Copy this:", txt);
+  });
   $("recTabs").addEventListener("click", function (e) {
     var t = e.target.closest(".tab"); if (!t) return;
     var tabs = this.querySelectorAll(".tab");
