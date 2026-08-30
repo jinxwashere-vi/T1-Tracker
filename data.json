@@ -1,14 +1,14 @@
 {
- "updatedAt": "2026-08-28T07:02:10Z",
+ "updatedAt": "2026-08-30T01:09:19Z",
  "source": "leaguepedia",
  "matches": [
   {
    "dt": "2026-08-29T08:00:00Z",
-   "opp": "TBD",
+   "opp": "BNK FEARX",
    "event": "LCK 2026 · Season Playoffs",
    "bo": 5,
-   "s": null,
-   "o": null
+   "s": "3-2",
+   "o": "W"
   },
   {
    "dt": "2026-08-23T08:00:00Z",
@@ -477,29 +477,29 @@
  ],
  "roster": [
   {
-   "role": "Top",
    "id": "Doran",
-   "name": "Choi Hyeon-joon"
+   "name": "Choi Hyeon-joon",
+   "role": "Top"
   },
   {
-   "role": "Jungle",
    "id": "Oner",
-   "name": "Mun Hyeon-jun"
+   "name": "Mun Hyeon-jun",
+   "role": "Jungle"
   },
   {
-   "role": "Mid",
    "id": "Faker",
-   "name": "Lee Sang-hyeok"
+   "name": "Lee Sang-hyeok",
+   "role": "Mid"
   },
   {
-   "role": "Bot",
    "id": "Peyz",
-   "name": "Kim Su-hwan"
+   "name": "Kim Su-hwan",
+   "role": "Bot"
   },
   {
-   "role": "Support",
    "id": "Keria",
-   "name": "Ryu Min-seok"
+   "name": "Ryu Min-seok",
+   "role": "Support"
   }
  ],
  "subs": [
