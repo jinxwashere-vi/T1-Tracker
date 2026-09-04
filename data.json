@@ -1,7 +1,23 @@
 {
- "updatedAt": "2026-08-30T01:09:19Z",
+ "updatedAt": "2026-09-04T01:13:43Z",
  "source": "leaguepedia",
  "matches": [
+  {
+   "dt": "2026-09-06T08:00:00Z",
+   "opp": "TBD",
+   "event": "LCK 2026 · Season Playoffs",
+   "bo": 5,
+   "s": null,
+   "o": null
+  },
+  {
+   "dt": "2026-09-02T08:00:00Z",
+   "opp": "Hanwha Life Esports",
+   "event": "LCK 2026 · Season Playoffs",
+   "bo": 5,
+   "s": "2-3",
+   "o": "L"
+  },
   {
    "dt": "2026-08-29T08:00:00Z",
    "opp": "BNK FEARX",
