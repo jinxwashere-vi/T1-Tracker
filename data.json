@@ -1,7 +1,15 @@
 {
- "updatedAt": "2026-09-24T06:02:26Z",
+ "updatedAt": "2026-10-19T05:57:32Z",
  "source": "leaguepedia",
  "matches": [
+  {
+   "dt": "2026-10-23T22:00:00Z",
+   "opp": "LØS",
+   "event": "2026 Season World Championship · Main Event",
+   "bo": 1,
+   "s": null,
+   "o": null
+  },
   {
    "dt": "2026-09-12T05:00:00Z",
    "opp": "Hanwha Life Esports",
