@@ -1,14 +1,38 @@
 {
- "updatedAt": "2026-10-20T05:50:51Z",
+ "updatedAt": "2026-10-27T06:09:57Z",
  "source": "leaguepedia",
  "matches": [
+  {
+   "dt": "2026-10-28T20:00:00Z",
+   "opp": "Movistar KOI",
+   "event": "2026 Season World Championship · Main Event",
+   "bo": 3,
+   "s": null,
+   "o": null
+  },
+  {
+   "dt": "2026-10-26T17:00:00Z",
+   "opp": "CTBC Flying Oyster",
+   "event": "2026 Season World Championship · Main Event",
+   "bo": 1,
+   "s": "1-0",
+   "o": "W"
+  },
+  {
+   "dt": "2026-10-24T23:00:00Z",
+   "opp": "Dplus Kia",
+   "event": "2026 Season World Championship · Main Event",
+   "bo": 1,
+   "s": "0-1",
+   "o": "L"
+  },
   {
    "dt": "2026-10-23T23:00:00Z",
    "opp": "LØS",
    "event": "2026 Season World Championship · Main Event",
    "bo": 1,
-   "s": null,
-   "o": null
+   "s": "1-0",
+   "o": "W"
   },
   {
    "dt": "2026-09-12T05:00:00Z",
