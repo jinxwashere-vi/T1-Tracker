@@ -1,7 +1,15 @@
 {
- "updatedAt": "2026-10-29T06:56:47Z",
+ "updatedAt": "2026-11-05T07:52:14Z",
  "source": "leaguepedia",
  "matches": [
+  {
+   "dt": "2026-11-06T22:00:00Z",
+   "opp": "Karmine Corp",
+   "event": "2026 Season World Championship · Main Event",
+   "bo": 5,
+   "s": null,
+   "o": null
+  },
   {
    "dt": "2026-10-28T20:00:00Z",
    "opp": "Movistar KOI",
