@@ -1,14 +1,46 @@
 {
- "updatedAt": "2026-11-05T07:52:14Z",
+ "updatedAt": "2026-11-14T07:29:40Z",
  "source": "leaguepedia",
  "matches": [
+  {
+   "dt": "2026-12-05T18:00:00Z",
+   "opp": "Movistar KOI",
+   "event": "2026 Red Bull League of Its Own",
+   "bo": 1,
+   "s": null,
+   "o": null
+  },
+  {
+   "dt": "2026-12-05T17:00:00Z",
+   "opp": "G2 Esports",
+   "event": "2026 Red Bull League of Its Own",
+   "bo": 1,
+   "s": null,
+   "o": null
+  },
+  {
+   "dt": "2026-12-05T16:00:00Z",
+   "opp": "Karmine Corp",
+   "event": "2026 Red Bull League of Its Own",
+   "bo": 1,
+   "s": null,
+   "o": null
+  },
+  {
+   "dt": "2026-11-08T22:00:00Z",
+   "opp": "Bilibili Gaming",
+   "event": "2026 Season World Championship · Main Event",
+   "bo": 5,
+   "s": "1-3",
+   "o": "L"
+  },
   {
    "dt": "2026-11-06T22:00:00Z",
    "opp": "Karmine Corp",
    "event": "2026 Season World Championship · Main Event",
    "bo": 5,
-   "s": null,
-   "o": null
+   "s": "3-1",
+   "o": "W"
   },
   {
    "dt": "2026-10-28T20:00:00Z",
