@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-14T07:29:40Z",
+ "updatedAt": "2026-11-20T08:17:53Z",
  "source": "leaguepedia",
  "matches": [
   {
@@ -572,11 +572,6 @@
   }
  ],
  "roster": [
-  {
-   "id": "Doran",
-   "name": "Choi Hyeon-jun",
-   "role": "Top"
-  },
   {
    "id": "Oner",
    "name": "Mun Hyeon-jun",
